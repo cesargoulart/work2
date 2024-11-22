@@ -10,18 +10,29 @@ class CheckboxList extends StatefulWidget {
 
 class _CheckboxListState extends State<CheckboxList> {
   List<bool> _isChecked = List.generate(5, (_) => false);
-  List<bool> _isVisible = List.generate(5, (_) => true);
+  List<bool> _isVisible = List.generate(5, (index) => index == 0);  // Only first task visible
 
   void _handleCheckbox(int index, bool? value) {
     setState(() {
       _isChecked[index] = value!;
-      // Hide the task above when checked
+      
+      // Show next task when checked
+      if (index < 4 && value) {
+        _isVisible[index + 1] = true;
+      }
+      // Hide task above when checked
       if (index > 0 && value) {
         _isVisible[index - 1] = false;
       }
-      // Show the task above when unchecked
+      
+      // Show task above when unchecked
       if (index > 0 && !value) {
         _isVisible[index - 1] = true;
+      }
+      // Hide next task when unchecked
+      if (index < 4 && !value) {
+        _isVisible[index + 1] = false;
+        _isChecked[index + 1] = false;  // Uncheck next task
       }
     });
   }
@@ -33,7 +44,7 @@ class _CheckboxListState extends State<CheckboxList> {
       itemCount: 5,
       itemBuilder: (context, index) {
         if (!_isVisible[index]) {
-          return Container(); // Return empty container for hidden tasks
+          return Container();  // Hidden task
         }
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
