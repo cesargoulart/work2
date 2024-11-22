@@ -31,6 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  xml: ^6.5.0
+  path_provider: ^2.1.2
 
 
 

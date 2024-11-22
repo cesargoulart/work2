@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: const TaskScreen(),
     );
   }
@@ -25,7 +26,8 @@ class TaskScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.brown[200],
+
       ),
       body: const CheckboxList(),
     );
