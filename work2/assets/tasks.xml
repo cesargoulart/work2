@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<tasks>
+  <task id="0" checked="true" visible="true"/>
+  <task id="1" checked="true" visible="true"/>
+  <task id="2" checked="true" visible="true"/>
+  <task id="3" checked="false" visible="true"/>
+  <task id="4" checked="false" visible="false"/>
+</tasks>

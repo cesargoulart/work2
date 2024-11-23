@@ -23,13 +23,8 @@ class TaskScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tasks'),
-        backgroundColor: Colors.brown[200],
-
-      ),
-      body: const CheckboxList(),
+    return const Scaffold(
+      body: CheckboxList(),
     );
   }
 }

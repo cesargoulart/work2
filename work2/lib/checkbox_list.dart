@@ -1,7 +1,9 @@
-// checkbox_list.dart
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:convert';
+import 'dart:html' as html;
 import 'dart:io';
 
 class CheckboxList extends StatefulWidget {
@@ -21,129 +23,140 @@ class _CheckboxListState extends State<CheckboxList> {
     _loadTasksFromXml();
   }
 
-  Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
+  Future<void> _loadTasksFromXml() async {
+    try {
+      String xmlString;
+      
+      // Different loading approach for web
+      if (kIsWeb) {
+        try {
+          // For web, try to load from assets first
+          xmlString = await rootBundle.loadString('assets/tasks.xml');
+        } catch (e) {
+          print('Error loading from assets: $e');
+          // If that fails, try loading from a URL (you can set up a local server)
+          final response = await html.HttpRequest.getString('http://localhost:8080/tasks.xml');
+          xmlString = response;
+        }
+      } else {
+        // For desktop/mobile, read from Documents
+        final file = File('c:/Users/cesar/Documents/tasks.xml');
+        xmlString = await file.readAsString();
+      }
+
+      print('Loaded XML content: $xmlString'); // Debug print
+
+      // Parse the XML
+      final document = XmlDocument.parse(xmlString);
+      final tasks = document.findAllElements('task');
+
+      if (mounted) {
+        setState(() {
+          // Update lists with proper length based on actual tasks
+          _isChecked = List.generate(tasks.length, (index) {
+            final task = tasks.elementAt(index);
+            return task.getAttribute('checked')?.toLowerCase() == 'true';
+          });
+
+          _isVisible = List.generate(tasks.length, (index) {
+            final task = tasks.elementAt(index);
+            return task.getAttribute('visible')?.toLowerCase() == 'true';
+          });
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tasks loaded successfully')),
+        );
+      }
+    } catch (e) {
+      print('Error loading XML: $e');
+      if (mounted) {
+        // Show error message to user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading tasks: $e')),
+        );
+        // Provide fallback data
+        setState(() {
+          _isChecked = List.generate(5, (_) => false);
+          _isVisible = List.generate(5, (index) => index == 0);
+        });
+      }
+    }
   }
 
-  Future<File> get _localFile async {
-    final path = await _localPath;
-    return File('$path/tasks.xml');
-  }
-
-  Future<void> _saveTasksToXml() async {
+  Future<void> _saveTaskState() async {
+    // Create XML document
     final builder = XmlBuilder();
     builder.processing('xml', 'version="1.0"');
     builder.element('tasks', nest: () {
-      for (int i = 0; i < _isChecked.length; i++) {
+      for (var i = 0; i < _isChecked.length; i++) {
         builder.element('task', nest: () {
-          builder.attribute('id', i.toString());
           builder.attribute('checked', _isChecked[i].toString());
           builder.attribute('visible', _isVisible[i].toString());
+          builder.text('Task ${i + 1}');
         });
       }
     });
 
-    final file = await _localFile;
-    await file.writeAsString(builder.buildDocument().toString());
-  }
+    final document = builder.buildDocument();
 
-  Future<void> _loadTasksFromXml() async {
-    try {
-      final file = await _localFile;
-      if (!await file.exists()) return;
-
-      final contents = await file.readAsString();
-      final document = XmlDocument.parse(contents);
-      final tasks = document.findAllElements('task');
-
-      setState(() {
-        for (var task in tasks) {
-          final id = int.parse(task.getAttribute('id')!);
-          _isChecked[id] = task.getAttribute('checked') == 'true';
-          _isVisible[id] = task.getAttribute('visible') == 'true';
-        }
-      });
-    } catch (e) {
-      // If there's an error reading the file, just use default values
-      print('Error loading tasks: $e');
+    // Here you would implement the saving mechanism
+    // For web, you might want to use localStorage or IndexedDB
+    if (kIsWeb) {
+      html.window.localStorage['tasks'] = document.toString();
+    } else {
+      // Implement desktop saving logic here
+      // You might want to use path_provider package for desktop
+      print('Saving for desktop: ${document.toString()}');
     }
   }
 
-  void _handleCheckbox(int index, bool? value) {
-    setState(() {
-      _isChecked[index] = value!;
-      
-      if (index < 4 && value) {
-        _isVisible[index + 1] = true;
-      }
-      if (index > 0 && value) {
-        _isVisible[index - 1] = false;
-      }
-      if (index > 0 && !value) {
-        _isVisible[index - 1] = true;
-      }
-      if (index < 4 && !value) {
-        _isVisible[index + 1] = false;
-        _isChecked[index + 1] = false;
-      }
-      
-      // Save tasks whenever there's a change
-      _saveTasksToXml();
-    });
+  void _updateTaskState(int index, bool? checked) {
+    if (checked != null) {
+      setState(() {
+        _isChecked[index] = checked;
+        if (checked && index < _isVisible.length - 1) {
+          _isVisible[index + 1] = true;
+        }
+        _saveTaskState(); // Save state after each update
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        if (!_isVisible[index]) {
-          return Container();  // Hidden task
-        }
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 3,
-              )
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tasks'),
+        backgroundColor: Colors.brown[200],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                _loadTasksFromXml();
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Loading XML file...')),
+              );
+            },
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Checkbox(
-                  value: _isChecked[index],
-                  onChanged: (value) => _handleCheckbox(index, value),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Task ${index + 1}',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontSize: 16,
-                      decoration: _isChecked[index]
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: _isChecked.length,
+        itemBuilder: (context, index) {
+          if (!_isVisible[index]) {
+            return const SizedBox.shrink();
+          }
+          return CheckboxListTile(
+            title: Text('Task ${index + 1}'),
+            value: _isChecked[index],
+            onChanged: (bool? value) => _updateTaskState(index, value),
+          );
+        },
+      ),
     );
   }
 }
