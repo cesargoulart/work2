@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:io';
 
@@ -26,7 +25,7 @@ class _CheckboxListState extends State<CheckboxList> {
   Future<void> _loadTasksFromXml() async {
     try {
       String xmlString;
-      
+
       // Different loading approach for web
       if (kIsWeb) {
         try {
@@ -35,7 +34,8 @@ class _CheckboxListState extends State<CheckboxList> {
         } catch (e) {
           print('Error loading from assets: $e');
           // If that fails, try loading from a URL (you can set up a local server)
-          final response = await html.HttpRequest.getString('http://localhost:8080/tasks.xml');
+          final response = await html.HttpRequest.getString(
+              'http://localhost:8080/tasks.xml');
           xmlString = response;
         }
       } else {
