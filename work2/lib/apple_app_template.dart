@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'dropdown_widget.dart';
 
 class AppleAppTemplate extends StatelessWidget {
-  const AppleAppTemplate({Key? key}) : super(key: key);
+  const AppleAppTemplate({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,8 @@ class AppleAppTemplate extends StatelessWidget {
             backgroundColor: Colors.blueAccent,
             foregroundColor: Colors.white,
             textStyle: const TextStyle(fontSize: 18.0),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10.0),
             ),
@@ -33,7 +34,7 @@ class AppleAppTemplate extends StatelessWidget {
 }
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +85,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class CheckboxList extends StatelessWidget {
-  const CheckboxList({Key? key}) : super(key: key);
+  const CheckboxList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,7 @@ class CheckboxList extends StatelessWidget {
 }
 
 class SecondScreen extends StatelessWidget {
-  const SecondScreen({Key? key}) : super(key: key);
+  const SecondScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +111,8 @@ class SecondScreen extends StatelessWidget {
         title: const Text('Second Screen'),
         backgroundColor: Colors.blueAccent,
       ),
-      body: Center(
-        child: const Text(
+      body: const Center(
+        child: Text(
           'This is the second screen.',
           style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
         ),
