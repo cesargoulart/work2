@@ -1,5 +1,6 @@
 // lib/apple_app_template.dart
 import 'package:flutter/material.dart';
+import 'dropdown_widget.dart';
 
 class AppleAppTemplate extends StatelessWidget {
   const AppleAppTemplate({Key? key}) : super(key: key);
@@ -41,28 +42,42 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Tasks'),
         backgroundColor: Colors.blueAccent,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            const Text(
-              'My Tasks',
-              style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: DropdownWidget(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'My Tasks',
+                      style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    const CheckboxList(),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SecondScreen()),
+                        );
+                      },
+                      child: const Text('Go to Second Screen'),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 20),
-            const CheckboxList(), // Include the checkbox list
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SecondScreen()),
-                );
-              },
-              child: const Text('Go to Second Screen'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

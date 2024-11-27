@@ -1,5 +1,6 @@
 // main.dart
 import 'package:flutter/material.dart';
+import 'package:work2/dropdown_widget.dart';
 import 'checkbox_list.dart';
 
 void main() {
@@ -23,8 +24,21 @@ class TaskScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: CheckboxList(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tasks'),
+      ),
+      body: Column(
+        children: const [
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: DropdownWidget(),
+          ),
+          Expanded(
+            child: CheckboxList(),
+          ),
+        ],
+      ),
     );
   }
 }
