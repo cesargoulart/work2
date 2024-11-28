@@ -33,8 +33,15 @@ class AppleAppTemplate extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _selectedOption = 'Option 1';
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +52,15 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: DropdownWidget(),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DropdownWidget(
+              onOptionSelected: (option) {
+                setState(() {
+                  _selectedOption = option;
+                });
+              },
+            ),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -58,17 +71,19 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     const Text(
                       'My Tasks',
-                      style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 24.0, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
-                    const CheckboxList(),
+                    CheckboxList(selectedOption: _selectedOption),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SecondScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const SecondScreen()),
                         );
                       },
                       child: const Text('Go to Second Screen'),
@@ -85,7 +100,9 @@ class HomeScreen extends StatelessWidget {
 }
 
 class CheckboxList extends StatelessWidget {
-  const CheckboxList({super.key});
+  final String selectedOption;
+
+  const CheckboxList({super.key, required this.selectedOption});
 
   @override
   Widget build(BuildContext context) {

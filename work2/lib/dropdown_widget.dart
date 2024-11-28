@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 
 class DropdownWidget extends StatefulWidget {
-  const DropdownWidget({super.key});
+  final Function(String) onOptionSelected;
+  const DropdownWidget({super.key, required this.onOptionSelected});
 
   @override
   State<DropdownWidget> createState() => _DropdownWidgetState();
@@ -33,21 +34,35 @@ class _DropdownWidgetState extends State<DropdownWidget> {
         child: DropdownButton<String>(
           value: _selectedOption,
           isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down),
-          elevation: 16,
-          style: const TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: _selectedOption != 'Option 1' ? Colors.blue : Colors.grey,
           ),
+          elevation: 16,
+          style: TextStyle(
+            color: _selectedOption != 'Option 1' ? Colors.blue : Colors.black87,
+            fontSize: 16,
+            fontWeight: _selectedOption != 'Option 1' ? FontWeight.bold : FontWeight.normal,
+          ),
+          dropdownColor: Colors.white,
+          menuMaxHeight: 200,
+          borderRadius: BorderRadius.circular(8),
           onChanged: (String? newValue) {
             setState(() {
               _selectedOption = newValue!;
             });
+            widget.onOptionSelected(_selectedOption);
           },
           items: _options.map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(
               value: value,
-              child: Text(value),
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: value == _selectedOption ? Colors.blue : Colors.black87,
+                  fontWeight: value == _selectedOption ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
             );
           }).toList(),
         ),

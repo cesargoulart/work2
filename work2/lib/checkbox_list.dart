@@ -6,20 +6,30 @@ import 'dart:html' as html;
 import 'dart:io';
 
 class CheckboxList extends StatefulWidget {
-  const CheckboxList({super.key});
+  final String selectedOption;
+  const CheckboxList({super.key, required this.selectedOption});
 
   @override
   State<CheckboxList> createState() => _CheckboxListState();
 }
 
 class _CheckboxListState extends State<CheckboxList> {
-  List<bool> _isChecked = List.generate(5, (_) => false);
-  List<bool> _isVisible = List.generate(5, (index) => index == 0);
+  List<bool> _isChecked = [];
+  List<bool> _isVisible = [];
+  List<String> _taskTexts = [];
 
   @override
   void initState() {
     super.initState();
     _loadTasksFromXml();
+  }
+
+  @override
+  void didUpdateWidget(CheckboxList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedOption != widget.selectedOption) {
+      _loadTasksFromXml();
+    }
   }
 
   Future<void> _loadTasksFromXml() async {
@@ -29,30 +39,25 @@ class _CheckboxListState extends State<CheckboxList> {
       // Different loading approach for web
       if (kIsWeb) {
         try {
-          // For web, try to load from assets first
           xmlString = await rootBundle.loadString('assets/tasks.xml');
         } catch (e) {
           print('Error loading from assets: $e');
-          // If that fails, try loading from a URL (you can set up a local server)
-          final response = await html.HttpRequest.getString(
-              'http://localhost:8080/tasks.xml');
+          final response = await html.HttpRequest.getString('http://localhost:8080/tasks.xml');
           xmlString = response;
         }
       } else {
-        // For desktop/mobile, read from Documents
         final file = File('c:/Users/cesar/Documents/tasks.xml');
         xmlString = await file.readAsString();
       }
 
-      print('Loaded XML content: $xmlString'); // Debug print
-
       // Parse the XML
       final document = XmlDocument.parse(xmlString);
-      final tasks = document.findAllElements('task');
+      final taskList = document.findAllElements('taskList')
+          .firstWhere((element) => element.getAttribute('id') == widget.selectedOption);
+      final tasks = taskList.findAllElements('task');
 
       if (mounted) {
         setState(() {
-          // Update lists with proper length based on actual tasks
           _isChecked = List.generate(tasks.length, (index) {
             final task = tasks.elementAt(index);
             return task.getAttribute('checked')?.toLowerCase() == 'true';
@@ -62,24 +67,23 @@ class _CheckboxListState extends State<CheckboxList> {
             final task = tasks.elementAt(index);
             return task.getAttribute('visible')?.toLowerCase() == 'true';
           });
-        });
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tasks loaded successfully')),
-        );
+          _taskTexts = List.generate(tasks.length, (index) {
+            final task = tasks.elementAt(index);
+            return task.text;
+          });
+        });
       }
     } catch (e) {
       print('Error loading XML: $e');
       if (mounted) {
-        // Show error message to user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading tasks: $e')),
         );
-        // Provide fallback data
         setState(() {
-          _isChecked = List.generate(5, (_) => false);
-          _isVisible = List.generate(5, (index) => index == 0);
+          _isChecked = [];
+          _isVisible = [];
+          _taskTexts = [];
         });
       }
     }
@@ -89,26 +93,37 @@ class _CheckboxListState extends State<CheckboxList> {
     // Create XML document
     final builder = XmlBuilder();
     builder.processing('xml', 'version="1.0"');
-    builder.element('tasks', nest: () {
-      for (var i = 0; i < _isChecked.length; i++) {
-        builder.element('task', nest: () {
-          builder.attribute('checked', _isChecked[i].toString());
-          builder.attribute('visible', _isVisible[i].toString());
-          builder.text('Task ${i + 1}');
-        });
-      }
+    builder.element('taskLists', nest: () {
+      builder.element('taskList', nest: () {
+        builder.attribute('id', widget.selectedOption);
+        for (var i = 0; i < _isChecked.length; i++) {
+          builder.element('task', nest: () {
+            builder.attribute('id', i.toString());
+            builder.attribute('checked', _isChecked[i].toString());
+            builder.attribute('visible', _isVisible[i].toString());
+            builder.text(_taskTexts[i]);
+          });
+        }
+      });
     });
 
     final document = builder.buildDocument();
-
-    // Here you would implement the saving mechanism
-    // For web, you might want to use localStorage or IndexedDB
-    if (kIsWeb) {
-      html.window.localStorage['tasks'] = document.toString();
-    } else {
-      // Implement desktop saving logic here
-      // You might want to use path_provider package for desktop
-      print('Saving for desktop: ${document.toString()}');
+    
+    try {
+      if (kIsWeb) {
+        // Handle web saving (you might want to implement a server endpoint)
+        print('Saving not implemented for web');
+      } else {
+        final file = File('c:/Users/cesar/Documents/tasks.xml');
+        await file.writeAsString(document.toString());
+      }
+    } catch (e) {
+      print('Error saving XML: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving tasks: $e')),
+        );
+      }
     }
   }
 
@@ -151,7 +166,13 @@ class _CheckboxListState extends State<CheckboxList> {
             return const SizedBox.shrink();
           }
           return CheckboxListTile(
-            title: Text('Task ${index + 1}'),
+            title: Text(
+              _taskTexts[index],
+              style: TextStyle(
+                color: _isChecked[index] ? Colors.white : Colors.black54,
+                fontWeight: _isChecked[index] ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
             value: _isChecked[index],
             onChanged: (bool? value) => _updateTaskState(index, value),
           );

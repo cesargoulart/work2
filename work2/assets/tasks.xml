@@ -1,8 +1,18 @@
 <?xml version="1.0"?>
-<tasks>
-  <task id="0" checked="true" visible="true"/>
-  <task id="1" checked="true" visible="true"/>
-  <task id="2" checked="true" visible="true"/>
-  <task id="3" checked="false" visible="true"/>
-  <task id="4" checked="false" visible="false"/>
-</tasks>
+<taskLists>
+    <taskList id="Option 1">
+        <task id="0" checked="true" visible="true">Task 1 for Option 1</task>
+        <task id="1" checked="false" visible="true">Task 2 for Option 1</task>
+        <task id="2" checked="false" visible="true">Task 3 for Option 1</task>
+    </taskList>
+    <taskList id="Option 2">
+        <task id="0" checked="false" visible="true">Task 1 for Option 2</task>
+        <task id="1" checked="false" visible="true">Task 2 for Option 2</task>
+        <task id="2" checked="true" visible="true">Task 3 for Option 2</task>
+    </taskList>
+    <taskList id="Option 3">
+        <task id="0" checked="false" visible="true">Task 1 for Option 3</task>
+        <task id="1" checked="true" visible="true">Task 2 for Option 3</task>
+        <task id="2" checked="false" visible="true">Task 3 for Option 3</task>
+    </taskList>
+</taskLists>

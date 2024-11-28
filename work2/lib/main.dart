@@ -22,8 +22,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class TaskScreen extends StatelessWidget {
+class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key});
+
+  @override
+  State<TaskScreen> createState() => _TaskScreenState();
+}
+
+class _TaskScreenState extends State<TaskScreen> {
+  String _selectedOption = 'Option 1';
 
   @override
   Widget build(BuildContext context) {
@@ -32,15 +39,21 @@ class TaskScreen extends StatelessWidget {
         title: const Text('Tasks'),
       ),
       body: Column(
-        children: const [
+        children: [
           StyledCard(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: DropdownWidget(),
+              padding: const EdgeInsets.all(16.0),
+              child: DropdownWidget(
+                onOptionSelected: (option) {
+                  setState(() {
+                    _selectedOption = option;
+                  });
+                },
+              ),
             ),
           ),
           Expanded(
-            child: CheckboxList(),
+            child: CheckboxList(selectedOption: _selectedOption),
           ),
         ],
       ),
