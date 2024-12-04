@@ -42,7 +42,8 @@ class _CheckboxListState extends State<CheckboxList> {
           xmlString = await rootBundle.loadString('assets/tasks.xml');
         } catch (e) {
           print('Error loading from assets: $e');
-          final response = await html.HttpRequest.getString('http://localhost:8080/tasks.xml');
+          final response = await html.HttpRequest.getString(
+              'http://localhost:8080/tasks.xml');
           xmlString = response;
         }
       } else {
@@ -52,8 +53,8 @@ class _CheckboxListState extends State<CheckboxList> {
 
       // Parse the XML
       final document = XmlDocument.parse(xmlString);
-      final taskList = document.findAllElements('taskList')
-          .firstWhere((element) => element.getAttribute('id') == widget.selectedOption);
+      final taskList = document.findAllElements('taskList').firstWhere(
+          (element) => element.getAttribute('id') == widget.selectedOption);
       final tasks = taskList.findAllElements('task');
 
       if (mounted) {
@@ -108,7 +109,7 @@ class _CheckboxListState extends State<CheckboxList> {
     });
 
     final document = builder.buildDocument();
-    
+
     try {
       if (kIsWeb) {
         // Handle web saving (you might want to implement a server endpoint)
@@ -167,10 +168,13 @@ class _CheckboxListState extends State<CheckboxList> {
           }
           return CheckboxListTile(
             title: Text(
-              _taskTexts[index],
+              'Task ${index + 1}',
+              textAlign: TextAlign.left,
               style: TextStyle(
-                color: _isChecked[index] ? Colors.white : Colors.black54,
-                fontWeight: _isChecked[index] ? FontWeight.bold : FontWeight.normal,
+                fontSize: 16,
+                color: _isChecked[index] ? Colors.white : Colors.yellow,
+                fontWeight: _isChecked[index] ? FontWeight.bold : FontWeight.bold,
+                decoration: _isChecked[index] ? TextDecoration.lineThrough  : TextDecoration.none,
               ),
             ),
             value: _isChecked[index],
