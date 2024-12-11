@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <tasks>
-  <task id="0" checked="false" visible="true"/>
+   <subtask id="0" checked="false" visible="true">Subtask 1</subtask>
   <task id="1" checked="false" visible="false"/>
   <task id="2" checked="false" visible="false"/>
   <task id="3" checked="false" visible="false"/>
