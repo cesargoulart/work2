@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:work2/dropdown_widget.dart';
 import 'checkbox_list.dart';
 import 'template.dart';
+import 'package:xml/xml.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
 
 void main() {
   runApp(const MyApp());
@@ -30,7 +33,43 @@ class TaskScreen extends StatefulWidget {
 }
 
 class _TaskScreenState extends State<TaskScreen> {
-  String _selectedOption = 'Option 1';
+  String _selectedOption = '';
+  List<String> _options = [];
+
+   @override
+  void initState() {
+    super.initState();
+    _loadOptionsFromXml();
+  }
+
+   Future<void> _loadOptionsFromXml() async {
+    try{
+      String xmlString = await rootBundle.loadString('assets/tasks.xml');
+      final xmlDocument = XmlDocument.parse(xmlString);
+       final taskLists = xmlDocument.findAllElements('taskList').toList();
+       if (taskLists.isNotEmpty){
+          _options = taskLists
+          .map((element) => element.getAttribute('id') ?? '')
+          .toList();
+        if (_options.isNotEmpty) {
+          setState(() {
+            _selectedOption = _options.first;
+          });
+        }
+      }
+    }
+      catch (e) {
+      print('Error loading XML: $e');
+        if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading tasks: $e')),
+          );
+        });
+      }
+      }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +88,8 @@ class _TaskScreenState extends State<TaskScreen> {
                     _selectedOption = option;
                   });
                 },
+                initialOptions: _options,
+                selectedOption: _selectedOption,
               ),
             ),
           ),

@@ -48,11 +48,9 @@ class _CheckboxListState extends State<CheckboxList> {
     } catch (e) {
       print('Error loading XML: $e');
       if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading tasks: $e')),
-          );
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading tasks: $e')),
+        );
       }
     }
   }
@@ -60,70 +58,55 @@ class _CheckboxListState extends State<CheckboxList> {
   void _loadTasksForCurrentOption() {
     try {
       final taskList = _xmlDocument.findAllElements('taskList')
-          .firstWhere((element) => element.getAttribute('id') == widget.selectedOption,
-            orElse: () => XmlElement(XmlName('taskList')),
-        );
-
-      if (taskList.name.local == 'taskList') {
-        if (mounted) {
-          setState(() {
-            _tasks = taskList.findElements('task').map((task) {
-              // Get only the direct text nodes, ignoring subtask elements
-              final textNodes = task.children.whereType<XmlText>();
-              final taskText = textNodes.isEmpty ? '' : textNodes.first.text.trim();
-              
-              return TaskItem(
-                id: int.parse(task.getAttribute('id') ?? '0'),
-                text: taskText,
-                isChecked: task.getAttribute('checked')?.toLowerCase() == 'true',
-                isVisible: task.getAttribute('visible')?.toLowerCase() == 'true',
-                subTasks: task.findElements('subtask').map((subtask) => 
-                  TaskItem(
-                    id: int.parse(subtask.getAttribute('id') ?? '0'),
-                    text: subtask.text.trim(),
-                    isChecked: subtask.getAttribute('checked')?.toLowerCase() == 'true',
-                    isVisible: true,
-                    subTasks: [],
-                    isSubTask: true,
-                  )
-                ).toList(),
-              );
-            }).toList();
-          });
-        }
-      }
-      else {
-       if (mounted) {
-          setState(() {
-            _tasks = [];
-          });
-        }
+          .firstWhere((element) => element.getAttribute('id') == widget.selectedOption);
+      
+      if (mounted) {
+        setState(() {
+          _tasks = taskList.findElements('task').map((task) {
+            // Get only the direct text nodes, ignoring subtask elements
+            final textNodes = task.children.whereType<XmlText>();
+            final taskText = textNodes.isEmpty ? '' : textNodes.first.text.trim();
+            
+            return TaskItem(
+              id: int.parse(task.getAttribute('id') ?? '0'),
+              text: taskText,
+              isChecked: task.getAttribute('checked')?.toLowerCase() == 'true',
+              isVisible: task.getAttribute('visible')?.toLowerCase() == 'true',
+              subTasks: task.findElements('subtask').map((subtask) => 
+                TaskItem(
+                  id: int.parse(subtask.getAttribute('id') ?? '0'),
+                  text: subtask.text.trim(),
+                  isChecked: subtask.getAttribute('checked')?.toLowerCase() == 'true',
+                  isVisible: true,
+                  subTasks: [],
+                  isSubTask: true,
+                )
+              ).toList(),
+            );
+          }).toList();
+        });
       }
     } catch (e) {
       print('Error loading tasks for option: $e');
       if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading tasks: $e')),
-          );
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading tasks: $e')),
+        );
       }
     }
   }
 
   List<TaskItem> _parseTaskList(XmlElement taskList) {
     return taskList.findElements('task').map((task) {
-            final textNodes = task.children.whereType<XmlText>();
-            final taskText = textNodes.isEmpty ? '' : textNodes.first.text.trim();
       return TaskItem(
         id: int.parse(task.getAttribute('id') ?? '0'),
-        text: taskText,
+        text: task.text,
         isChecked: task.getAttribute('checked')?.toLowerCase() == 'true',
         isVisible: task.getAttribute('visible')?.toLowerCase() == 'true',
         subTasks: task.findElements('subtask').map((subtask) => 
           TaskItem(
             id: int.parse(subtask.getAttribute('id') ?? '0'),
-            text: subtask.text.trim(),
+            text: subtask.text,
             isChecked: subtask.getAttribute('checked')?.toLowerCase() == 'true',
             isVisible: true,
             subTasks: [],
@@ -224,11 +207,9 @@ class _CheckboxListState extends State<CheckboxList> {
     } catch (e) {
       print('Error saving XML: $e');
       if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving tasks: $e')),
-          );
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving tasks: $e')),
+        );
       }
     }
   }
