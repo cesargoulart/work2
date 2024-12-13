@@ -20,7 +20,14 @@ class _CheckboxListState extends State<CheckboxList> {
   @override
   void initState() {
     super.initState();
+    print('Initializing CheckboxListState');
     _loadTasksFromXml();
+    if (kIsWeb) {
+      // Force a rebuild after the frame is rendered
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   Future<void> _loadTasksFromXml() async {
@@ -71,7 +78,7 @@ class _CheckboxListState extends State<CheckboxList> {
               // Get only the direct text nodes, ignoring subtask elements
               final textNodes = task.children.whereType<XmlText>();
               final taskText = textNodes.isEmpty ? '' : textNodes.first.text.trim();
-              
+              print('Loaded task: ${taskText}, Checked: ${task.getAttribute('checked')}'); // Log task details
               return TaskItem(
                 id: int.parse(task.getAttribute('id') ?? '0'),
                 text: taskText,
@@ -89,6 +96,7 @@ class _CheckboxListState extends State<CheckboxList> {
                 ).toList(),
               );
             }).toList();
+            print('Total tasks loaded: ${_tasks.length}'); // Log total tasks loaded
           });
         }
       }
@@ -301,25 +309,15 @@ class _CheckboxListState extends State<CheckboxList> {
           children: [
             // Toggle button (yellow circle with arrow)
             if (hasSubtasks)
-              Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
+              IconButton(
+                icon: Icon(
+                  isExpanded ? Icons.expand_more : Icons.chevron_right,
                   color: Colors.yellow,
                 ),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  icon: Icon(
-                    isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                    size: 20,
-                    color: Colors.black,
-                  ),
-                  onPressed: () => _toggleExpanded(index),
-                ),
+                onPressed: () => _toggleExpanded(index),
               )
             else
-              const SizedBox(width: 24),
+              const SizedBox(width: 40),
             const SizedBox(width: 8),
             // Task text
             Expanded(
@@ -345,36 +343,42 @@ class _CheckboxListState extends State<CheckboxList> {
               constraints: const BoxConstraints(),
             ),
             const SizedBox(width: 8),
-            // Checkbox
-            Transform.scale(
-              scale: 0.8,
-              child: Checkbox(
-                value: task.isChecked,
-                onChanged: (bool? value) {
-                  setState(() {
-                    task.isChecked = value ?? false;
-                    _saveTaskState();
-                  });
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                side: const BorderSide(color: Colors.grey),
-                checkColor: Colors.white,
-                fillColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (states.contains(MaterialState.selected)) {
-                      return Colors.grey;
-                    }
-                    return Colors.transparent;
+            // Wrap checkbox in Material widget to ensure proper rendering on web
+            Material(
+              color: Colors.transparent,
+              child: Transform.scale(
+                scale: 0.8,
+                child: Checkbox(
+                  value: task.isChecked,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      task.isChecked = value ?? false;
+                      _saveTaskState();
+                    });
                   },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  side: BorderSide(
+                    color: Colors.grey,
+                    width: kIsWeb ? 2.0 : 1.0, // Thicker border on web
+                  ),
+                  checkColor: Colors.white,
+                  fillColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.selected)) {
+                        return Colors.grey;
+                      }
+                      return Colors.transparent;
+                    },
+                  ),
                 ),
               ),
             ),
           ],
         ),
         // Subtasks
-        _buildSubtasks(task, index, 32),
+        _buildSubtasks(task, index, 40),
       ],
     );
   }

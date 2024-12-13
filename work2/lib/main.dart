@@ -1,10 +1,11 @@
-// main.dart
 import 'package:flutter/material.dart';
 import 'package:work2/dropdown_widget.dart';
 import 'checkbox_list.dart';
 import 'template.dart';
 import 'package:xml/xml.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html;
 
 
 void main() {
@@ -35,6 +36,7 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   String _selectedOption = '';
   List<String> _options = [];
+  bool _isLoading = true;
 
    @override
   void initState() {
@@ -44,7 +46,18 @@ class _TaskScreenState extends State<TaskScreen> {
 
    Future<void> _loadOptionsFromXml() async {
     try{
-      String xmlString = await rootBundle.loadString('assets/tasks.xml');
+      String xmlString;
+      if (kIsWeb) {
+        final stored = html.window.localStorage['tasks_xml'];
+        if (stored != null) {
+          xmlString = stored;
+        } else {
+          xmlString = await rootBundle.loadString('assets/tasks.xml');
+          html.window.localStorage['tasks_xml'] = xmlString;
+        }
+      } else {
+        xmlString = await rootBundle.loadString('assets/tasks.xml');
+      }
       final xmlDocument = XmlDocument.parse(xmlString);
        final taskLists = xmlDocument.findAllElements('taskList').toList();
        if (taskLists.isNotEmpty){
@@ -68,6 +81,11 @@ class _TaskScreenState extends State<TaskScreen> {
         });
       }
       }
+      finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
   }
 
 
@@ -77,7 +95,9 @@ class _TaskScreenState extends State<TaskScreen> {
       appBar: AppBar(
         title: const Text('Tasks'),
       ),
-      body: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           StyledCard(
             child: Padding(
