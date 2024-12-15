@@ -35,9 +35,7 @@ dependencies:
   path_provider: ^2.1.2
   path_provider_platform_interface: ^2.0.1
   google_fonts: ^5.1.0
-
-
-
+  window_manager: ^0.3.8
 
 dev_dependencies:
   flutter_test:

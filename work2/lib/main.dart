@@ -5,10 +5,16 @@ import 'template.dart';
 import 'package:xml/xml.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
+import 'package:window_manager/window_manager.dart';
 
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  if (!kIsWeb) {
+    await windowManager.ensureInitialized();
+  }
+  
   runApp(const MyApp());
 }
 
@@ -33,31 +39,43 @@ class TaskScreen extends StatefulWidget {
   State<TaskScreen> createState() => _TaskScreenState();
 }
 
-class _TaskScreenState extends State<TaskScreen> {
+class _TaskScreenState extends State<TaskScreen> with WindowListener {
   String _selectedOption = '';
   List<String> _options = [];
   bool _isLoading = true;
 
-   @override
+  bool _isAlwaysOnTop = false;
+
+  @override
   void initState() {
     super.initState();
     _loadOptionsFromXml();
+    if (!kIsWeb) {
+      windowManager.addListener(this);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (!kIsWeb) {
+      windowManager.removeListener(this);
+    }
+    super.dispose();
+  }
+
+  Future<void> _toggleAlwaysOnTop() async {
+    if (kIsWeb) return;
+    
+    setState(() {
+      _isAlwaysOnTop = !_isAlwaysOnTop;
+    });
+    await windowManager.setAlwaysOnTop(_isAlwaysOnTop);
   }
 
    Future<void> _loadOptionsFromXml() async {
     try{
       String xmlString;
-      if (kIsWeb) {
-        final stored = html.window.localStorage['tasks_xml'];
-        if (stored != null) {
-          xmlString = stored;
-        } else {
-          xmlString = await rootBundle.loadString('assets/tasks.xml');
-          html.window.localStorage['tasks_xml'] = xmlString;
-        }
-      } else {
-        xmlString = await rootBundle.loadString('assets/tasks.xml');
-      }
+      xmlString = await rootBundle.loadString('assets/tasks.xml');
       final xmlDocument = XmlDocument.parse(xmlString);
        final taskLists = xmlDocument.findAllElements('taskList').toList();
        if (taskLists.isNotEmpty){
@@ -94,6 +112,21 @@ class _TaskScreenState extends State<TaskScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          if (kIsWeb) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Always on top is only available on desktop platforms'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else {
+            _toggleAlwaysOnTop();
+          }
+        },
+        child: Icon(_isAlwaysOnTop ? Icons.push_pin : Icons.push_pin_outlined),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

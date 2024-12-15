@@ -1,3 +1,5 @@
 {
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "Codegeex.SidebarUI.LanguagePreference": "English",
+    "Codegeex.RepoIndex": true
 }

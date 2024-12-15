@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
 
 class CheckboxList extends StatefulWidget {
   final String selectedOption;
@@ -32,19 +31,7 @@ class _CheckboxListState extends State<CheckboxList> {
 
   Future<void> _loadTasksFromXml() async {
     try {
-      String xmlString;
-      if (kIsWeb) {
-        final stored = html.window.localStorage['tasks_xml'];
-        if (stored != null) {
-          xmlString = stored;
-        } else {
-          xmlString = await rootBundle.loadString('assets/tasks.xml');
-          html.window.localStorage['tasks_xml'] = xmlString;
-        }
-      } else {
-        xmlString = await rootBundle.loadString('assets/tasks.xml');
-      }
-
+      String xmlString = await rootBundle.loadString('assets/tasks.xml');
       _xmlDocument = XmlDocument.parse(xmlString);
       _loadTasksForCurrentOption();
       
@@ -225,10 +212,6 @@ class _CheckboxListState extends State<CheckboxList> {
       // Replace the old taskList with the new one
       final index = parentNode!.children.indexOf(taskList);
       parentNode.children[index] = newTaskList;
-
-      if (kIsWeb) {
-        html.window.localStorage['tasks_xml'] = _xmlDocument.toString();
-      }
     } catch (e) {
       print('Error saving XML: $e');
       if (mounted) {
