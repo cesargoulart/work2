@@ -6,6 +6,7 @@ import 'package:xml/xml.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:window_manager/window_manager.dart';
+import 'dart:io' show Platform;
 
 
 void main() async {
@@ -113,7 +114,7 @@ class _TaskScreenState extends State<TaskScreen> with WindowListener {
       appBar: AppBar(
         title: const Text('Tasks'),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: !kIsWeb && Platform.isWindows ? FloatingActionButton(
         onPressed: () {
           if (kIsWeb) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -127,7 +128,7 @@ class _TaskScreenState extends State<TaskScreen> with WindowListener {
           }
         },
         child: Icon(_isAlwaysOnTop ? Icons.push_pin : Icons.push_pin_outlined),
-      ),
+      ) : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
