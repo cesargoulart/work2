@@ -1,18 +1,17 @@
 <?xml version="1.0"?>
 <taskLists>
     <taskList id="Conectores">
-        <task id="0" checked="false" visible="true">Fazer Branch
+        <task id="0" checked="false" visible="true">Task 1 for Option 1
             <subtask id="0" checked="false" visible="true">Subtask 1 for Task 1</subtask>
             <subtask id="1" checked="false" visible="true">Subtask 2 for Task 1</subtask>
         </task>
-        <task id="1" checked="false" visible="true">Correr o Automate
+        <task id="1" checked="false" visible="true">Task 2 for Option 1
             <subtask id="0" checked="false" visible="true">Subtask 1 for Task 2</subtask>
         </task>
-        <task id="2" checked="false" visible="true">Subir Codigo</task>
-        <task id="3" checked="false" visible="true">Testar no Usercube</task>
+        <task id="2" checked="false" visible="true">Task 3 for Option 1</task>
     </taskList>
     <taskList id="Option 2">
-        <task id="0" checked="false" visible="true">Testar no Usercube
+        <task id="0" checked="false" visible="true">Task 1 for Option 2
             <subtask id="0" checked="false" visible="true">Subtask 1</subtask>
         </task>
         <task id="1" checked="false" visible="true">Task 2 for Option 2</task>
