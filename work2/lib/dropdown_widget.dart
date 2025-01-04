@@ -17,6 +17,7 @@ class DropdownWidget extends StatefulWidget {
 }
 
 class _DropdownWidgetState extends State<DropdownWidget> {
+  final TextEditingController _textController = TextEditingController();
   String? _selectedOption;
 
   @override
@@ -29,29 +30,41 @@ class _DropdownWidgetState extends State<DropdownWidget> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButton<String>(
-      value: _selectedOption,
-      items: widget.initialOptions.map((option) {
-        return DropdownMenuItem<String>(
-          value: option,
-          child: Text(
-            option,
-            style: const TextStyle(color: Colors.white), // Added text style
-          ),
-        );
-      }).toList(),
-      onChanged: (newValue) {
-        if (newValue != null) {
-          setState(() {
-            _selectedOption = newValue;
-          });
-          widget.onOptionSelected(newValue);
-        }
-      },
-      isExpanded: true,
-      underline: Container(),
-    );
-  }
+ @override
+Widget build(BuildContext context) {
+  return Column( // Wrap in a Column to stack the TextField and DropdownButton
+    children: [
+      TextField(
+        controller: _textController,
+        decoration: InputDecoration(
+          labelText: 'Enter text',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      const SizedBox(height: 8), // Add some space between the TextField and DropdownButton
+      DropdownButton<String>(
+        value: _selectedOption,
+        items: widget.initialOptions.map((option) {
+          return DropdownMenuItem<String>(
+            value: option,
+            child: Text(
+              option,
+              style: const TextStyle(color: Colors.white), // Added text style
+            ),
+          );
+        }).toList(),
+        onChanged: (newValue) {
+          if (newValue != null) {
+            setState(() {
+              _selectedOption = newValue;
+            });
+            widget.onOptionSelected(newValue);
+          }
+        },
+        isExpanded: true,
+        underline: Container(),
+      ),
+    ],
+  );
+}
 }
