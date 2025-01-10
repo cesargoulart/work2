@@ -56,29 +56,38 @@ class _DropdownWidgetState extends State<DropdownWidget> {
       String xmlString = await file.readAsString();
       final xmlDocument = XmlDocument.parse(xmlString);
       
-      // Find the taskList element for the selected option
-      final taskList = xmlDocument.findAllElements('taskList')
-          .firstWhere((element) => element.getAttribute('id') == option,
-              orElse: () => throw Exception('TaskList not found'));
+      // Find the entry element for the selected option
+      final entry = xmlDocument.findAllElements('entry')
+          .firstWhere((element) => element.getAttribute('text') == option,
+              orElse: () => throw Exception('Entry not found'));
 
       setState(() {
         // Load text content
-        _textController.text = taskList.getAttribute('text') ?? '';
+        _textController.text = entry.getAttribute('text') ?? '';
         
         // Load checkbox states
-        _mrChecked = taskList.getAttribute('MR')?.toLowerCase() == 'true';
-        _coChecked = taskList.getAttribute('CO')?.toLowerCase() == 'true';
-        _dev1Checked = taskList.getAttribute('DEV1')?.toLowerCase() == 'true';
-        _dev2Checked = taskList.getAttribute('DEV2')?.toLowerCase() == 'true';
-        _rec1Checked = taskList.getAttribute('REC1')?.toLowerCase() == 'true';
-        _rec2Checked = taskList.getAttribute('REC2')?.toLowerCase() == 'true';
+        _mrChecked = entry.getAttribute('MR')?.toLowerCase() == 'true';
+        _coChecked = entry.getAttribute('CO')?.toLowerCase() == 'true';
+        _dev1Checked = entry.getAttribute('DEV1')?.toLowerCase() == 'true';
+        _dev2Checked = entry.getAttribute('DEV2')?.toLowerCase() == 'true';
+        _rec1Checked = entry.getAttribute('REC1')?.toLowerCase() == 'true';
+        _rec2Checked = entry.getAttribute('REC2')?.toLowerCase() == 'true';
       });
     } catch (e) {
-      print('Error loading state for option $option: $e');
+      print('Error loading state: $e');
     }
   }
 
   Future<void> _saveToFile() async {
+    if (_textController.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter text before saving')),
+        );
+      }
+      return;
+    }
+
     try {
       final directory = await getApplicationDocumentsDirectory();
       final path = '${directory.path}/assets';
@@ -91,44 +100,76 @@ class _DropdownWidgetState extends State<DropdownWidget> {
       XmlDocument xmlDocument;
       if (await file.exists()) {
         String xmlString = await file.readAsString();
-        xmlDocument = XmlDocument.parse(xmlString);
+        try {
+          xmlDocument = XmlDocument.parse(xmlString);
+        } catch (e) {
+          // If parsing fails, create a new document
+          xmlDocument = XmlDocument([
+            XmlDeclaration([XmlAttribute(XmlName('version'), '1.0')]),
+            XmlElement(XmlName('entries'), [])
+          ]);
+        }
       } else {
         // Create new XML document if file doesn't exist
         xmlDocument = XmlDocument([
-          XmlElement(XmlName('root'), [])
+          XmlDeclaration([XmlAttribute(XmlName('version'), '1.0')]),
+          XmlElement(XmlName('entries'), [])
         ]);
       }
       
-      // Find or create the taskList element for the current selectedOption
-      var taskList = xmlDocument.findAllElements('taskList')
-          .firstWhere((element) => element.getAttribute('id') == _selectedOption,
-              orElse: () {
-                // If taskList doesn't exist, create a new one
-                final newTaskList = XmlElement(XmlName('taskList'));
-                newTaskList.setAttribute('id', _selectedOption ?? '');
-                xmlDocument.root.children.add(newTaskList);
-                return newTaskList;
-              });
+      // Ensure we have a root element
+      var rootElement = xmlDocument.rootElement;
+      if (rootElement == null) {
+        rootElement = XmlElement(XmlName('entries'), []);
+        xmlDocument.children.add(rootElement);
+      }
 
-      // Update or add text content
-      taskList.setAttribute('text', _textController.text);
+      // Check if an entry with this text already exists
+      var existingEntries = rootElement.findElements('entry')
+          .where((element) => element.getAttribute('text') == _textController.text);
       
-      // Update or add checkbox states
-      taskList.setAttribute('MR', _mrChecked.toString());
-      taskList.setAttribute('CO', _coChecked.toString());
-      taskList.setAttribute('DEV1', _dev1Checked.toString());
-      taskList.setAttribute('DEV2', _dev2Checked.toString());
-      taskList.setAttribute('REC1', _rec1Checked.toString());
-      taskList.setAttribute('REC2', _rec2Checked.toString());
+      XmlElement? existingEntry;
+      if (existingEntries.isNotEmpty) {
+        existingEntry = existingEntries.first;
+
+      if (existingEntry != null) {
+        // If entry exists, update it
+        existingEntry.setAttribute('MR', _mrChecked.toString());
+        existingEntry.setAttribute('CO', _coChecked.toString());
+        existingEntry.setAttribute('DEV1', _dev1Checked.toString());
+        existingEntry.setAttribute('DEV2', _dev2Checked.toString());
+        existingEntry.setAttribute('REC1', _rec1Checked.toString());
+        existingEntry.setAttribute('REC2', _rec2Checked.toString());
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Entry updated successfully')),
+          );
+        }
+      } else {
+        // If entry doesn't exist, create new one
+        final newEntry = XmlElement(XmlName('entry'));
+        newEntry.setAttribute('text', _textController.text);
+        newEntry.setAttribute('MR', _mrChecked.toString());
+        newEntry.setAttribute('CO', _coChecked.toString());
+        newEntry.setAttribute('DEV1', _dev1Checked.toString());
+        newEntry.setAttribute('DEV2', _dev2Checked.toString());
+        newEntry.setAttribute('REC1', _rec1Checked.toString());
+        newEntry.setAttribute('REC2', _rec2Checked.toString());
+        
+        // Add the new entry to the root element
+        rootElement.children.add(newEntry);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('New entry saved successfully')),
+          );
+        }
+      }
       
       // Save the updated XML
       await file.writeAsString(xmlDocument.toString());
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved successfully to projectos.xml')),
-        );
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
