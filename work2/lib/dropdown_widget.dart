@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
 class DropdownWidget extends StatefulWidget {
   final Function(String) onOptionSelected;
@@ -42,6 +41,136 @@ class _DropdownWidgetState extends State<DropdownWidget> {
     _loadStateForOption(widget.selectedOption);
   }
 
+  Widget _buildHistoryCheckbox(String label, bool checked) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            checked ? Icons.check_box : Icons.check_box_outline_blank,
+            color: checked ? Colors.green : Colors.grey,
+            size: 16,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: checked ? Colors.green : Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showHistory() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final path = '${directory.path}/assets';
+      final file = File('$path/projectos.xml');
+
+      if (!await file.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No history found')),
+          );
+        }
+        return;
+      }
+
+      String xmlString = await file.readAsString();
+      final xmlDocument = XmlDocument.parse(xmlString);
+      final entries = xmlDocument.rootElement?.findElements('entry').toList() ?? [];
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return Dialog(
+              backgroundColor: const Color(0xFF1A1A2E),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'History',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white24),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: entries.length,
+                        itemBuilder: (context, index) {
+                          final entry = entries[index];
+                          final text = entry.getAttribute('text') ?? '';
+                          return ListTile(
+                            title: Text(
+                              text,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            subtitle: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildHistoryCheckbox('MR', entry.getAttribute('MR') == 'true'),
+                                  _buildHistoryCheckbox('CO', entry.getAttribute('CO') == 'true'),
+                                  _buildHistoryCheckbox('DEV1', entry.getAttribute('DEV1') == 'true'),
+                                  _buildHistoryCheckbox('DEV2', entry.getAttribute('DEV2') == 'true'),
+                                  _buildHistoryCheckbox('REC1', entry.getAttribute('REC1') == 'true'),
+                                  _buildHistoryCheckbox('REC2', entry.getAttribute('REC2') == 'true'),
+                                ],
+                              ),
+                            ),
+                            onTap: () {
+                              // Load the selected entry into the form
+                              _textController.text = text;
+                              setState(() {
+                                _mrChecked = entry.getAttribute('MR') == 'true';
+                                _coChecked = entry.getAttribute('CO') == 'true';
+                                _dev1Checked = entry.getAttribute('DEV1') == 'true';
+                                _dev2Checked = entry.getAttribute('DEV2') == 'true';
+                                _rec1Checked = entry.getAttribute('REC1') == 'true';
+                                _rec2Checked = entry.getAttribute('REC2') == 'true';
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading history: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _loadStateForOption(String option) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
@@ -56,23 +185,22 @@ class _DropdownWidgetState extends State<DropdownWidget> {
       String xmlString = await file.readAsString();
       final xmlDocument = XmlDocument.parse(xmlString);
       
-      // Find the entry element for the selected option
-      final entry = xmlDocument.findAllElements('entry')
-          .firstWhere((element) => element.getAttribute('text') == option,
-              orElse: () => throw Exception('Entry not found'));
-
-      setState(() {
-        // Load text content
-        _textController.text = entry.getAttribute('text') ?? '';
-        
-        // Load checkbox states
-        _mrChecked = entry.getAttribute('MR')?.toLowerCase() == 'true';
-        _coChecked = entry.getAttribute('CO')?.toLowerCase() == 'true';
-        _dev1Checked = entry.getAttribute('DEV1')?.toLowerCase() == 'true';
-        _dev2Checked = entry.getAttribute('DEV2')?.toLowerCase() == 'true';
-        _rec1Checked = entry.getAttribute('REC1')?.toLowerCase() == 'true';
-        _rec2Checked = entry.getAttribute('REC2')?.toLowerCase() == 'true';
-      });
+      // Find the entry with matching text
+      final entries = xmlDocument.rootElement?.findElements('entry')
+          .where((element) => element.getAttribute('text') == _textController.text);
+      
+      if (entries != null && entries.isNotEmpty) {
+        final entry = entries.first;
+        setState(() {
+          // Load checkbox states
+          _mrChecked = entry.getAttribute('MR')?.toLowerCase() == 'true';
+          _coChecked = entry.getAttribute('CO')?.toLowerCase() == 'true';
+          _dev1Checked = entry.getAttribute('DEV1')?.toLowerCase() == 'true';
+          _dev2Checked = entry.getAttribute('DEV2')?.toLowerCase() == 'true';
+          _rec1Checked = entry.getAttribute('REC1')?.toLowerCase() == 'true';
+          _rec2Checked = entry.getAttribute('REC2')?.toLowerCase() == 'true';
+        });
+      }
     } catch (e) {
       print('Error loading state: $e');
     }
@@ -103,20 +231,18 @@ class _DropdownWidgetState extends State<DropdownWidget> {
         try {
           xmlDocument = XmlDocument.parse(xmlString);
         } catch (e) {
-          // If parsing fails, create a new document
           xmlDocument = XmlDocument([
             XmlDeclaration([XmlAttribute(XmlName('version'), '1.0')]),
             XmlElement(XmlName('entries'), [])
           ]);
         }
       } else {
-        // Create new XML document if file doesn't exist
         xmlDocument = XmlDocument([
           XmlDeclaration([XmlAttribute(XmlName('version'), '1.0')]),
           XmlElement(XmlName('entries'), [])
         ]);
       }
-      
+
       // Ensure we have a root element
       var rootElement = xmlDocument.rootElement;
       if (rootElement == null) {
@@ -131,9 +257,10 @@ class _DropdownWidgetState extends State<DropdownWidget> {
       XmlElement? existingEntry;
       if (existingEntries.isNotEmpty) {
         existingEntry = existingEntries.first;
+      }
 
       if (existingEntry != null) {
-        // If entry exists, update it
+        // Update existing entry
         existingEntry.setAttribute('MR', _mrChecked.toString());
         existingEntry.setAttribute('CO', _coChecked.toString());
         existingEntry.setAttribute('DEV1', _dev1Checked.toString());
@@ -147,7 +274,7 @@ class _DropdownWidgetState extends State<DropdownWidget> {
           );
         }
       } else {
-        // If entry doesn't exist, create new one
+        // Create new entry
         final newEntry = XmlElement(XmlName('entry'));
         newEntry.setAttribute('text', _textController.text);
         newEntry.setAttribute('MR', _mrChecked.toString());
@@ -157,7 +284,6 @@ class _DropdownWidgetState extends State<DropdownWidget> {
         newEntry.setAttribute('REC1', _rec1Checked.toString());
         newEntry.setAttribute('REC2', _rec2Checked.toString());
         
-        // Add the new entry to the root element
         rootElement.children.add(newEntry);
         
         if (mounted) {
@@ -227,9 +353,7 @@ class _DropdownWidgetState extends State<DropdownWidget> {
             ),
             const SizedBox(width: 8),
             ElevatedButton(
-              onPressed: () {
-                // Add H button functionality here
-              },
+              onPressed: _showHistory,  // This line references the _showHistory function
               child: const Text('H'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -265,31 +389,6 @@ class _DropdownWidgetState extends State<DropdownWidget> {
               }),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        // Dropdown
-        DropdownButton<String>(
-          value: _selectedOption,
-          items: widget.initialOptions.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(
-                option,
-                style: const TextStyle(color: Colors.white),
-              ),
-            );
-          }).toList(),
-          onChanged: (newValue) {
-            if (newValue != null) {
-              setState(() {
-                _selectedOption = newValue;
-              });
-              widget.onOptionSelected(newValue);
-              _loadStateForOption(newValue);
-            }
-          },
-          isExpanded: true,
-          underline: Container(),
         ),
       ],
     );
